@@ -57,6 +57,8 @@ async function move(page, shot) {
     return page.waitForTimeout(2600);
   }
   if (await st.locator('.choices:not(.locked) .choice[data-ok]').count()) {
+    // Let the falling cubes land first, so the screenshot shows a whole pile.
+    if (await st.locator('.bk-view').count()) await page.waitForTimeout(1800);
     await shot();
     return down(st.locator('.choice[data-ok]'));
   }
@@ -141,6 +143,11 @@ async function solve(page, label) {
       await page.waitForTimeout(600);
       await page.locator('.sheet .row').nth(3).click();
       await page.waitForTimeout(300);
+      await page.locator('.sheet .done-btn').click();
+      await page.waitForTimeout(900);
+      // Reopen so the home screen behind the sheet is in Japanese too.
+      await page.locator('.home:not(.leave) .gear-btn').click();
+      await page.waitForTimeout(700);
       await page.screenshot({ path: `${out}/ja-00-settings.png` });
       await page.locator('.sheet .done-btn').click();
       await page.waitForTimeout(900);

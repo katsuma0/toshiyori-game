@@ -1,5 +1,6 @@
-// Renders the 1024 px app icon and 6.9 inch App Store screenshots (1320 x 2868)
-// in English and Japanese, straight from a real playthrough.
+// Renders the 1024 px app icon, a cream launch screen image, and 6.9 inch App
+// Store screenshots (1320 x 2868) in English and Japanese, straight from a real
+// playthrough.
 // Usage: node tools/store-assets.js
 const { chromium } = require('playwright');
 const path = require('path');
@@ -12,6 +13,13 @@ const out = path.join(__dirname, '..', 'store');
   const icon = await browser.newPage({ viewport: { width: 1024, height: 1024 } });
   await icon.goto('file://' + path.join(out, 'icon.svg'));
   await icon.screenshot({ path: path.join(out, 'AppIcon-1024.png') });
+  // Capacitor's template launch image is its own logo on white. This one is
+  // the app's cream with the icon's tiles small in the middle, so opening the
+  // app never flashes someone else's brand.
+  const splash = await browser.newPage({ viewport: { width: 2732, height: 2732 } });
+  const svg = fs.readFileSync(path.join(out, 'icon.svg'), 'utf8');
+  await splash.setContent(`<body style="margin:0;height:100vh;display:grid;place-items:center;background:#FBF7F1"><div style="width:520px;height:520px">${svg.replace('<svg', '<svg width="520" height="520"')}</div></body>`);
+  await splash.screenshot({ path: path.join(out, 'Splash-2732.png') });
   await browser.close();
 
   const shots = '/tmp/store-shots';
