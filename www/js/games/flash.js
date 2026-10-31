@@ -1,7 +1,7 @@
 import { el, rand, shuffle, wait, choices } from '../util.js';
 import { t } from '../i18n.js';
 
-// A number shows for a moment, then hides. Pick it from three that look alike.
+// A number shows for a moment, then hides. Pick it from six that look alike.
 const LEVELS = [null, [3, 1600], [4, 1500], [5, 1400], [6, 1400], [7, 1300]];
 
 function makeNumber(len) {
@@ -40,7 +40,9 @@ export default {
     const [len, ms] = LEVELS[ctx.level];
     const answer = makeNumber(len);
     const opts = new Set([answer]);
-    while (opts.size < 3) opts.add(decoy(answer));
+    // Five decoys, each one slip away from the real number.
+    let guard = 0;
+    while (opts.size < 6 && guard++ < 500) opts.add(decoy(answer));
 
     const board = el('div', 'flashboard', `<span class="digits">${pretty(answer)}</span>`);
     ctx.stage.append(board);

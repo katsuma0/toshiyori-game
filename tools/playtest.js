@@ -44,6 +44,18 @@ const down = (loc) => loc.dispatchEvent('pointerdown');
 // Looks at whatever is on stage and makes one correct move.
 async function move(page, shot) {
   const st = page.locator('.play:not(.leave) .stage');
+  // Stopwatch: start, wait for the target, stop, then sit out the result.
+  if (await st.locator('[data-role="go"]').count()) {
+    const target = +(await page.locator('.play:not(.leave) .instruction').textContent()).match(/\d+/)[0];
+    await down(st.locator('[data-role="go"]'));
+    const t0 = Date.now();
+    await page.waitForTimeout(1500);
+    await shot();
+    // The screenshot takes a variable bite out of the wait, so stop on the clock.
+    await page.waitForTimeout(Math.max(0, target * 1000 - 60 - (Date.now() - t0)));
+    await down(st.locator('[data-role="go"]'));
+    return page.waitForTimeout(2600);
+  }
   if (await st.locator('.choices:not(.locked) .choice[data-ok]').count()) {
     await shot();
     return down(st.locator('.choice[data-ok]'));
@@ -117,16 +129,34 @@ async function solve(page, label) {
   const browser = await chromium.launch();
   const errors = [];
   for (const lang of ['en', 'ja']) {
-    const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: S, hasTouch: true, locale: lang === 'ja' ? 'ja-JP' : 'en-CA' });
+    // Japanese is reached the way a player would: through the Settings sheet.
+    const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: S, hasTouch: true, locale: 'en-CA' });
     page.on('pageerror', (e) => errors.push(`${lang}: ${e.message}`));
     page.on('console', (m) => m.type() === 'error' && errors.push(`${lang}: ${m.text()}`));
     await page.addInitScript(recorder);
     await page.goto(`http://localhost:${port}/`);
     await page.waitForTimeout(1200);
+    if (lang === 'ja') {
+      await page.locator('.home:not(.leave) .gear-btn').click();
+      await page.waitForTimeout(600);
+      await page.locator('.sheet .row').nth(3).click();
+      await page.waitForTimeout(300);
+      await page.screenshot({ path: `${out}/ja-00-settings.png` });
+      await page.locator('.sheet .done-btn').click();
+      await page.waitForTimeout(900);
+    } else {
+      await page.locator('.home:not(.leave) .gear-btn').click();
+      await page.waitForTimeout(600);
+      await page.screenshot({ path: `${out}/en-00-settings.png` });
+      await page.locator('.veil').click({ position: { x: 20, y: 20 } });
+      await page.waitForTimeout(900);
+    }
     await page.screenshot({ path: `${out}/${lang}-00-home.png` });
 
-    const n = lang === 'en' ? await page.locator('.game-tile').count() : 3;
-    for (let i = 0; i < n; i++) {
+    // Japanese plays a spread that shows yen and the picture games for the store.
+    const count = await page.locator('.game-tile').count();
+    const picks = lang === 'en' ? [...Array(count).keys()] : [1, 5, 9, 11];
+    for (const i of picks) {
       const tile = page.locator('.home:not(.leave) .game-tile').nth(i);
       const name = (await tile.locator('strong').textContent()).trim();
       await tile.click();

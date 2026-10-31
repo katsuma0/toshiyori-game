@@ -89,6 +89,21 @@ export function choices(host, options, correct, render = (v) => v, fx) {
   });
 }
 
+// Six answer options: the right one plus five plausible slips drawn from
+// `pool`, topped up with near neighbours if the pool runs short. Numbers come
+// back sorted so the player can scan them like a keypad.
+export function sixOptions(answer, pool = [], { min = 0, n = 6 } = {}) {
+  const out = new Set([answer]);
+  for (const v of shuffle(pool)) {
+    if (out.size >= n) break;
+    if (v >= min && v !== answer && Number.isInteger(v)) out.add(v);
+  }
+  for (let k = 1; out.size < n && k < 1000; k++) {
+    for (const v of shuffle([answer + k, answer - k])) if (out.size < n && v >= min) out.add(v);
+  }
+  return [...out].sort((a, b) => a - b);
+}
+
 // Wrong answers that look plausible: close to the right one, distinct, positive.
 export function nearby(answer, spread, n = 2, step = 1) {
   const out = new Set();

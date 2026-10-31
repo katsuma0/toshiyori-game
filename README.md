@@ -1,27 +1,31 @@
 # Brain Garden
 
-Ten short brain games for older adults, built for an iPhone, one finger and no reading glasses. English and Japanese. There is one home screen, every game has a big Home button, and nothing needs typing.
+Fifteen short brain games for older adults, built for an iPhone, one finger and no reading glasses. English and Japanese. One home screen, a big Home button in every game, nothing to type.
 
-The big green Play button runs five random games, one round each. That is the whole app for most people. The ten tiles under it open one game at a time:
+The big green Play button runs five random games, one round each. That is the whole app for most people. The tiles under it open one game at a time:
 
 - **Count Up.** Tap 1 to 16 in order on a 4x4 grid. From level 2 the numbers skip, so you compare instead of count.
+- **Train.** A railway map is missing a piece of track. Pick the straight or the curve that gets the train to the exit, then watch it drive through. From level 4 two pieces in a row are missing. The three choices are drawn as the actual track tiles, turned the way they would sit on the map, so it is a matching job, not a left-or-right puzzle.
+- **Plus, Minus, Times, Divide.** One sum at a time, six answers to pick from. Plus never goes over 100, Minus never goes below zero, Times stays small, and Divide always comes out even.
 - **Odd One.** One picture is slightly different, like a tomato among apples. Later levels flip the same picture around.
-- **Lights.** Squares light up with a tone each. Tap them back in the same order. Starts at four.
-- **Heaviest.** Balance scales tip into place. Work out which ball is heaviest. Plain coloured balls, because a grape outweighing a melon would feel like a trick.
-- **Add Up.** Tap two numbers that make the target. The board is built from matching pairs, so it never dead-ends.
-- **Copy.** Tap squares until your grid matches the pattern. Tap again to undo.
-- **Pairs.** Card matching with real 3D flips. Higher levels use look-alike pictures.
-- **Blocks.** Count the blocks in a pile. Stacks never get taller toward the front, so no block is secretly hidden.
-- **Coins.** Add up a handful of coins. Canadian coins in English, yen in Japanese.
-- **Flash.** A number shows for a second and a half. Pick it from three that differ by one digit or a swap.
+- **Blocks.** Count a pile of 3 to 27 blocks. The piles are shapes you can work out: a 4x4 slab with one missing is 15, two towers of 3 and 2 are 5, a 2x2x2 cube with a corner gone is 7.
+- **Lights.** Squares light up with a tone each. Tap them back in the same order.
+- **Stopwatch.** Press Start, then Stop when you think the target time has passed. Level 1 is always 5 seconds; later levels go from 4 to 10. From level 3 the hand fades out and you count in your head.
+- **Pair Up.** Tap two numbers that make the target. The board is built from matching pairs, so it never dead-ends.
+- **Coins.** A little shop with five kinds of round: count the money, work out the change, find the coin that is missing, add up two prices, and see what is left in your purse. Level 1 is counting and change only. Canadian money in English, yen in Japanese.
+- **Copy.** Tap squares until your grid matches the pattern.
+- **Pairs.** Card matching with 3D flips. Higher levels use look-alike pictures.
+- **Flash.** A number shows for a moment. Pick it from six that differ by one digit or a swap.
 
-Every game is original. The five kinds (look, remember, think, count, see) follow the same idea as Nintendo's Big Brain Academy, but none of the art, names or puzzles are copied.
+Every game with an answer to pick uses six big buttons in two rows at the bottom of the screen, where a thumb can reach them.
+
+All the games are original. They borrow the five kinds of puzzle from Nintendo's Big Brain Academy (look, remember, think, count, see). None of its art, names or puzzles are copied.
 
 Each game ends on a star screen with two buttons, Again and Home. Three stars moves that game up a level, one star moves it down, five levels each. If someone pauses for seven seconds the right answer starts to glow, four seconds the first time they play. A wrong tap gets a soft low tone and a double tick, never a buzzer, and the game carries on.
 
-Every tap has a sound and an iPhone haptic. Tones stay between 200 and 1100 Hz because high frequencies are the first thing age related hearing loss takes. The home screen has four toggles: sound, vibration, bigger text, and English or 日本語. The language starts from the phone's setting. Reduce Motion is respected.
+Every tap has a sound and an iPhone haptic. Tones stay between 200 and 1100 Hz because high frequencies are the first thing age related hearing loss takes. The gear button on the home screen opens Settings: sound, vibration, bigger text, and English or 日本語. The language starts from the phone's setting. Reduce Motion is respected.
 
-The mascot is Mame, a bean sprout. Mame bobs on the home screen and jumps on the results screen.
+The look is flat pastel: soft fills, deep same-colour ink for text and pictures, thin borders, no shadows.
 
 No accounts, no ads, no network, no tracking. Progress stays on the phone.
 
@@ -33,7 +37,7 @@ npm start
 
 Open http://localhost:8080. Haptics only work on a real phone.
 
-`npm test` has a bot play all ten games and the mixed set, in English then Japanese, in headless Chromium. It fails on any page error. Screenshots land in `/tmp/shots`.
+`npm test` has a bot play every game and the mixed set in English, then switch to Japanese through Settings and play again, in headless Chromium. It fails on any page error. Screenshots land in `/tmp/shots`.
 
 ## Build for iPhone
 

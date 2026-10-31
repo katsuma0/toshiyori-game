@@ -2,7 +2,6 @@ import { fx, unlockAudio } from './feedback.js';
 import { icons } from './icons.js';
 import { settings, save, levelOf, record, playedToday, hasPlayed, markPlayed } from './store.js';
 import { t, gameName, gameHow, lang, setLang, locale } from './i18n.js';
-import { mascot } from './mascot.js';
 import { confetti } from './particles.js';
 import { el, wait, sample, replay } from './util.js';
 import order from './games/order.js';
@@ -13,11 +12,35 @@ import copy from './games/copy.js';
 import lights from './games/lights.js';
 import pairs from './games/pairs.js';
 import flash from './games/flash.js';
-import heavy from './games/heavy.js';
 import blocks from './games/blocks.js';
+import train from './games/train.js';
+import timer from './games/timer.js';
+import { plus, minus, times, divide } from './games/math.js';
 
 // Grouped by kind so neighbours on the home screen feel different.
-const GAMES = [order, odd, lights, heavy, sum, copy, pairs, blocks, coins, flash];
+const GAMES = [order, train, plus, minus, odd, blocks, times, divide, lights, timer, sum, coins, copy, pairs, flash];
+
+// Flat pastel theme: each game has a soft tint for backgrounds and a deep ink
+// of the same hue for pictures and text, so contrast stays high.
+const THEME = {
+  order: ['#CDEFD9', '#1E7346'],
+  train: ['#E2F0C6', '#4A7210'],
+  plus: ['#D4E6FF', '#2556A6'],
+  minus: ['#E4DCFF', '#5A3EB5'],
+  times: ['#FFD8E5', '#AE2A5B'],
+  divide: ['#CDEFEC', '#12756D'],
+  odd: ['#EADCFB', '#6934AE'],
+  blocks: ['#D9E5FF', '#2D57B3'],
+  lights: ['#FFDCE8', '#B0245A'],
+  timer: ['#FFE6B8', '#955700'],
+  sum: ['#FFDCC7', '#AF4C17'],
+  coins: ['#FBEAB4', '#835E0C'],
+  copy: ['#D1F1E2', '#12765A'],
+  pairs: ['#FFE0D3', '#AD441D'],
+  flash: ['#DDE3F4', '#33467A'],
+};
+const tint = (id) => THEME[id][0];
+const ink = (id) => THEME[id][1];
 const app = document.getElementById('app');
 let session = null;
 
@@ -70,12 +93,8 @@ function home() {
   const s = el('main', 'home');
   const date = new Date().toLocaleDateString(locale(), { weekday: 'long', month: 'long', day: 'numeric' });
   const head = el('header', 'hello');
-  const m = mascot('idle', 76);
-  m.addEventListener('pointerdown', () => {
-    replay(m, 'boing');
-    fx.select(7);
-  });
-  head.append(m, el('div', 'hello-text', `<p class="date">${date}</p><h1>${greeting()}</h1>`));
+  const gear = button('gear-btn', icons.gear, t('settings'), openSettings);
+  head.append(el('div', 'hello-text', `<p class="date">${date}</p><h1>${greeting()}</h1>`), gear);
   s.append(head);
 
   const scroll = el('div', 'home-scroll');
@@ -93,14 +112,15 @@ function home() {
     const card = el(
       'button',
       `game-tile${done ? ' played' : ''}`,
-      `<span class="badge" style="--c:${g.color}">${icons[g.id]}</span>
+      `<span class="badge">${icons[g.id]}</span>
        <strong>${gameName(g.id)}</strong>
        ${done ? `<span class="tick">${icons.check}</span>` : ''}`,
     );
     card.type = 'button';
     card.style.setProperty('--i', i);
-    card.style.setProperty('--c', g.color);
-    card.setAttribute('aria-label', `${gameName(g.id)}. ${gameHow(g.id, 10)}.${done ? ` ${t('played')}.` : ''}`);
+    card.style.setProperty('--tint', tint(g.id));
+    card.style.setProperty('--gink', ink(g.id));
+    card.setAttribute('aria-label', `${gameName(g.id)}. ${gameHow(g.id, 6)}.${done ? ` ${t('played')}.` : ''}`);
     card.addEventListener('click', () => {
       fx.press();
       play([g], g.rounds);
@@ -109,36 +129,71 @@ function home() {
   });
   scroll.append(list);
   s.append(scroll);
+  show(s);
+}
 
-  const toggles = el('footer', 'toggles');
-  const toggle = (key, on, off, label, flip = () => (settings[key] = !settings[key])) => {
-    const b = el('button', 'toggle');
-    b.type = 'button';
+// ---------- Settings ----------
+// A sheet that slides up over the home screen. Four big rows, each one a
+// single tap, and one big Done button. Tapping outside also closes it.
+
+function openSettings() {
+  const veil = el('div', 'veil');
+  const sheet = el('section', 'sheet');
+  sheet.setAttribute('role', 'dialog');
+  sheet.setAttribute('aria-modal', 'true');
+  sheet.setAttribute('aria-label', t('settings'));
+
+  const rows = el('div', 'rows');
+  const row = (iconSvg, label, value, onTap) => {
+    const r = el('button', 'row');
+    r.type = 'button';
     const paint = () => {
-      b.innerHTML = `${settings[key] === false ? off : on}<span>${label()}</span>`;
-      if (key !== 'lang') b.setAttribute('aria-pressed', !!settings[key]);
+      const v = value();
+      r.innerHTML = `<span class="row-icon">${iconSvg}</span><span class="row-label">${label()}</span><span class="pill ${v.on ? 'on' : ''}">${v.text}</span>`;
+      r.setAttribute('aria-label', `${label()}: ${v.text}`);
     };
     paint();
-    b.addEventListener('click', () => {
-      flip();
+    r.addEventListener('click', () => {
+      onTap();
       save();
       applySettings();
       fx.press();
-      replay(b, 'boing');
-      // Language changes every word on the page, so rebuild it.
-      if (key === 'lang') home();
-      else paint();
+      repaint();
     });
-    return b;
+    r.paint = paint;
+    return r;
   };
-  toggles.append(
-    toggle('sound', icons.soundOn, icons.soundOff, () => t('sound')),
-    toggle('haptics', icons.vibrate, icons.vibrateOff, () => t('buzz')),
-    toggle('bigText', icons.text, icons.text, () => t('bigText')),
-    toggle('lang', icons.globe, icons.globe, () => t('lang'), () => setLang(lang() === 'ja' ? 'en' : 'ja')),
-  );
-  s.append(toggles);
-  show(s);
+  const onOff = (key) => () => ({ on: !!settings[key], text: settings[key] ? t('on') : t('off') });
+  const flip = (key) => () => (settings[key] = !settings[key]);
+  const items = [
+    row(icons.soundOn, () => t('sound'), onOff('sound'), flip('sound')),
+    row(icons.vibrate, () => t('buzz'), onOff('haptics'), flip('haptics')),
+    row(icons.text, () => t('bigText'), onOff('bigText'), flip('bigText')),
+    row(icons.globe, () => t('language'), () => ({ on: true, text: lang() === 'ja' ? 'English' : '日本語' }), () => setLang(lang() === 'ja' ? 'en' : 'ja')),
+  ];
+  // The language row shows the language you would switch to, written in that
+  // language, so someone who cannot read the current one can still find it.
+  const title = el('h2', '', t('settings'));
+  const done = button('primary done-btn', icons.check, t('done'), close);
+  function repaint() {
+    items.forEach((r) => r.paint());
+    title.textContent = t('settings');
+    done.querySelector('span').textContent = t('done');
+  }
+  rows.append(...items);
+  sheet.append(el('div', 'grabber'), title, rows, done);
+  veil.append(sheet);
+  veil.addEventListener('click', (e) => e.target === veil && close());
+  document.body.append(veil);
+  requestAnimationFrame(() => veil.classList.add('open'));
+
+  function close() {
+    veil.classList.remove('open');
+    veil.classList.add('closing');
+    setTimeout(() => veil.remove(), 350);
+    // Rebuild home so a language change shows everywhere.
+    home();
+  }
 }
 
 // ---------- A session: one game several times, or a mix of games once each ----------
@@ -190,8 +245,9 @@ async function play(list, roundsEach, mix = false) {
     const game = plan[step];
     // First timers get a nudge sooner. Everyone gets one eventually.
     hintDelay = hasPlayed(game.id) ? 7000 : 4000;
-    s.style.setProperty('--accent', game.color);
-    title.innerHTML = `<span class="badge small" style="--c:${game.color}">${icons[game.id]}</span><span>${gameName(game.id)}</span>`;
+    s.style.setProperty('--accent', ink(game.id));
+    s.style.setProperty('--tint', tint(game.id));
+    title.innerHTML = `<span class="badge small" style="--tint:${tint(game.id)};--gink:${ink(game.id)}">${icons[game.id]}</span><span>${gameName(game.id)}</span>`;
     const say = (arg) => {
       instr.textContent = typeof arg === 'number' ? gameHow(game.id, arg) : arg;
       replay(instr, 'pop');
@@ -242,11 +298,14 @@ function results(list, mix, mistakes, ms) {
   const mins = Math.floor(ms / 60000);
   const secs = Math.round((ms % 60000) / 1000);
   const time = mins ? t('mins', mins, secs) : t('secs', secs);
-  const accent = mix ? '#2E9E5B' : game.color;
+  const accent = mix ? '#1E7346' : ink(game.id);
 
   const s = el('main', 'results');
   s.style.setProperty('--accent', accent);
-  s.append(mascot(stars === 3 ? 'happy' : stars === 2 ? 'glad' : 'idle', 120));
+  s.style.setProperty('--tint', mix ? '#CDEFD9' : tint(game.id));
+  // The game's own badge, large, anchors the screen so it is clear which game
+  // just finished.
+  s.append(el('div', 'badge big', mix ? icons.play : icons[game.id]));
   const starRow = el('div', 'stars', [0, 1, 2].map((k) => `<span class="star${k < stars ? ' got' : ''}" style="--k:${k}">${icons.star}</span>`).join(''));
   starRow.setAttribute('role', 'img');
   starRow.setAttribute('aria-label', t('stars', stars));

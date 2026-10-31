@@ -18,9 +18,10 @@ const out = path.join(__dirname, '..', 'store');
   fs.rmSync(shots, { recursive: true, force: true });
   execFileSync('node', [path.join(__dirname, 'playtest.js'), shots, '440', '956', '3'], { stdio: 'inherit' });
   const pick = {
-    en: ['en-00-home', 'en-01-count-up', 'en-04-heaviest', 'en-07-pairs', 'en-09-coins', 'en-10-flash-results'],
-    ja: ['ja-00-home', 'ja-01-game', 'ja-02-game', 'ja-03-game', 'ja-20-mix', 'ja-20-mix-results'],
+    en: ['en-00-home', 'en-02-train', 'en-06-blocks', 'en-03-plus', 'en-10-stopwatch', 'en-14-pairs'],
+    ja: ['ja-00-home', 'ja-02-game', 'ja-12-game', 'ja-06-game', 'ja-10-game', 'ja-00-settings'],
   };
+
   fs.rmSync(path.join(out, 'screenshots'), { recursive: true, force: true });
   for (const [lang, files] of Object.entries(pick)) {
     const dir = path.join(out, 'screenshots', lang);
