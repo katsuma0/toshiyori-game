@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#FBF6EC"/>
+  <g font-family="ui-rounded, 'SF Pro Rounded', 'Nunito', system-ui, sans-serif" font-weight="900" font-size="230" text-anchor="middle" fill="#fff">
+    <rect x="132" y="132" width="350" height="350" rx="80" fill="#2E7D4F"/><text x="307" y="387">1</text>
+    <rect x="542" y="132" width="350" height="350" rx="80" fill="#C2410C"/><text x="717" y="387">2</text>
+    <rect x="132" y="542" width="350" height="350" rx="80" fill="#1D4ED8"/><text x="307" y="797">3</text>
+    <rect x="542" y="542" width="350" height="350" rx="80" fill="#BE185D"/><text x="717" y="797">4</text>
+  </g>
+</svg>

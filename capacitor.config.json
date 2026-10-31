@@ -1,0 +1,18 @@
+{
+  "appId": "ca.katsumaonishi.braingarden",
+  "appName": "Brain Garden",
+  "webDir": "www",
+  "backgroundColor": "#FBF6EC",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#FBF6EC",
+    "scrollEnabled": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "backgroundColor": "#FBF6EC",
+      "showSpinner": false
+    }
+  }
+}
