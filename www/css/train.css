@@ -1,0 +1,200 @@
+/* Train: a little railway map seen from above. Flat pastel fills and thin
+   lines, no shadows or shine. The map itself never moves; only the gap, the
+   train, the steam and the flag do, with transform and opacity. Everything
+   is scoped under .trn-* so nothing leaks. */
+
+/* Fills the stage above the answers. The map inside is the biggest square
+   that fits, so small phones get the full width instead of a fixed cap. */
+.trn-fit {
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  padding: 4px 0;
+  display: grid;
+  place-items: center;
+  container-type: size;
+}
+.trn-map {
+  position: relative;
+  /* The first line is for engines without container units. */
+  width: min(100%, 45dvh);
+  width: min(100cqw, 100cqh, 560px);
+  aspect-ratio: 1;
+  overflow: hidden;
+  container-type: inline-size;
+}
+.trn-ground { position: absolute; inset: 0; }
+
+/* ---------- Ground ---------- */
+
+.trn-meadow { fill: #D8EDC2; }
+/* Drawn over the stubs, so the track runs off under the map's edge. */
+.trn-frame { fill: none; stroke: #C2DDA4; stroke-width: 3; }
+.trn-field { fill: #E9F5D9; }
+.trn-gridline { fill: none; stroke: #D3E7BB; stroke-width: 2; }
+.trn-clover { fill: #C4E2AB; }
+
+.trn-tree .e { fill: #8DBF73; }
+.trn-tree .f { fill: #AED894; }
+.trn-bush .e { fill: #9CC981; }
+.trn-bush .f { fill: #C2E3A9; }
+.trn-rock .e { fill: #C9C3B6; }
+.trn-rock .f { fill: #E4E0D7; }
+.trn-pond .e { fill: #9FCDE3; }
+.trn-pond .f { fill: #CBE8F5; }
+.trn-pond .pad { fill: #9CCB7A; }
+.trn-pond .bud { fill: #F5A9BF; }
+.trn-flower circle { fill: #F7B9CA; }
+.trn-flower .c { fill: #F2B63D; }
+.trn-flower.yellow circle { fill: #FBD873; }
+.trn-flower.yellow .c { fill: #E8955B; }
+.trn-flower.white circle { fill: #FFFFFF; }
+.trn-flower.white .c { fill: #F2B63D; }
+
+/* ---------- Track ---------- */
+
+.trn-bed { fill: none; stroke: #EFE4CC; stroke-width: 60; }
+.trn-sleepers { fill: none; stroke: #C79566; stroke-width: 9; stroke-linecap: round; }
+.trn-rails { fill: none; stroke: #6E625A; stroke-width: 5; }
+.trn-route { fill: none; stroke: none; }
+
+/* ---------- The gap ---------- */
+
+.trn-slot { position: absolute; }
+.trn-ask {
+  position: absolute;
+  inset: 6%;
+  display: grid;
+  place-items: center;
+  border-radius: 18%;
+  background: #F3E2C2;
+  border: 2px dashed #CDAE7E;
+  color: #8E5F2A;
+  font-size: calc(var(--cell) * .55cqi);
+  font-weight: 900;
+  line-height: 1;
+  transition: opacity .2s var(--ease), transform .4s var(--spring);
+}
+/* The gap waiting for an answer breathes gently and wears the game's ink. */
+.trn-slot.active .trn-ask {
+  border: 3px solid var(--accent);
+  color: var(--accent);
+  animation: trn-breathe 2s ease-in-out infinite;
+}
+@keyframes trn-breathe { 50% { transform: scale(1.05); } }
+.trn-slot.trying .trn-ask { opacity: 0; transform: scale(.8); animation: none; }
+.trn-slot.filled .trn-ask { opacity: 0; transform: scale(.5); animation: none; }
+
+.trn-piece { position: absolute; inset: 0; }
+.trn-piece .trn-tilebg, .trn-piece .trn-tileline { fill: none; }
+.trn-piece.wrong .trn-tilebg { fill: var(--bad-tint); }
+.trn-piece.wrong .trn-tileline { stroke: #F2B79C; stroke-width: 3; }
+/* No fill mode: with Reduce Motion the animation is skipped and the piece
+   simply shows, still, until the script takes it away. */
+.trn-piece.wrong { animation: trn-wrong 1.15s var(--ease); }
+@keyframes trn-wrong {
+  0% { opacity: 0; transform: scale(1.25); }
+  14% { opacity: 1; transform: scale(1); }
+  24% { transform: translateX(-9%) rotate(-4deg); }
+  34% { transform: translateX(8%) rotate(3deg); }
+  44% { transform: translateX(-5%); }
+  54% { transform: translateX(2%); }
+  62% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: scale(.85); }
+}
+.trn-piece.placed { animation: trn-drop .55s var(--spring) both; }
+@keyframes trn-drop { 0% { opacity: 0; transform: scale(1.5); } 40% { opacity: 1; } }
+/* A soft ring spreads from the gap once the right piece lands. */
+.trn-slot.filled::after {
+  content: '';
+  position: absolute;
+  inset: 4%;
+  border-radius: 18%;
+  border: 3px solid var(--good);
+  opacity: 0;
+  animation: trn-ring .8s var(--ease) .1s;
+}
+@keyframes trn-ring { 0% { opacity: .9; transform: scale(.9); } 100% { opacity: 0; transform: scale(1.4); } }
+
+/* ---------- Train, steam, flag ---------- */
+
+.trn-mover {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  will-change: transform;
+}
+.trn-train {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--cell) * .8%);
+  aspect-ratio: 80 / 52;
+  will-change: transform;
+}
+.trn-body { fill: var(--accent); }
+.trn-cab { fill: #FFFFFF; opacity: .26; }
+.trn-window { fill: #FFF6DC; }
+.trn-wheels rect { fill: #3F3A35; }
+.trn-chimney { fill: #2F2B27; opacity: .55; }
+.trn-chimney-top { fill: #2F2B27; opacity: .7; }
+.trn-lamp { fill: #FFD66E; }
+.trn-buffer { fill: #3F3A35; }
+
+.trn-puff {
+  position: absolute;
+  width: calc(var(--cell) * .22%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #FFFFFF;
+  pointer-events: none;
+}
+
+.trn-flag {
+  position: absolute;
+  width: calc(var(--cell) * .46%);
+  aspect-ratio: 46 / 60;
+  transform: translate(-15%, -95%);
+  pointer-events: none;
+}
+.trn-flag > div { width: 100%; height: 100%; transform-origin: 15% 95%; }
+.trn-flag.wave > div { animation: trn-wave 1s var(--spring); }
+@keyframes trn-wave {
+  25% { transform: rotate(-9deg) scale(1.12); }
+  55% { transform: rotate(6deg) scale(1.05); }
+}
+.trn-flag-cloth { fill: #F29A8C; }
+.trn-flag-pole { fill: none; stroke: #6E625A; stroke-width: 4; stroke-linecap: round; }
+.trn-flag-knob { fill: #F2B63D; }
+.trn-flag-foot { fill: #C2DDA4; }
+
+/* ---------- Answer tiles ---------- */
+
+.trn-choices { width: min(100%, 440px); }
+.trn-choices .choice {
+  aspect-ratio: 1;
+  min-height: 96px;
+  padding: 9px;
+  border-radius: 26px;
+}
+.trn-opt .trn-tilebg { fill: #E9F5D9; }
+.trn-opt .trn-tileline { fill: none; stroke: #CFE4B5; stroke-width: 2.5; }
+/* The direction arrow: the game's ink with a white edge so it stays clear
+   over rails and sleepers. */
+.trn-arrow path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.trn-arrow .o { stroke: #FFFFFF; stroke-width: 13; }
+.trn-arrow .o.h { fill: #FFFFFF; stroke-width: 7; }
+.trn-arrow .i { stroke: var(--accent); stroke-width: 6.5; }
+.trn-arrow .i.h { fill: var(--accent); stroke-width: 1.5; }
+.trn-choices .choice.right .trn-tilebg { fill: var(--good-tint); }
+.trn-choices.trn-leave { animation: trn-leave .22s var(--ease) both; }
+@keyframes trn-leave { to { opacity: 0; transform: translateY(16px) scale(.96); } }
+/* Once the track is whole, the answers step back so eyes follow the train. */
+.trn-choices.trn-done .choice:not(.right) { opacity: .25; transform: scale(.9); }
+
+@media (max-height: 720px) {
+  .trn-choices .choice { min-height: 88px; padding: 7px; }
+}

@@ -1,0 +1,62 @@
+/* Blocks: a pile of flat pastel cubes on a soft floor mat. Three solid face
+   tones of the game's blue and a thin outline on every face, so each cube
+   reads as its own piece. */
+
+.bk-view {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  width: 100%;
+  /* Falling cubes appear from the top edge of the picture instead of
+     drifting over the instruction line on short screens. */
+  clip-path: inset(0 -40px -40px);
+}
+/* Absolute fill keeps the drawing sized by the space left above the answers,
+   which percentage heights in a flex item do not do reliably in Safari. */
+.bk-view svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.bk-floor { fill: #EDE6D9; stroke: #EDE6D9; stroke-linejoin: round; }
+
+.bk-cube {
+  stroke: #2B4D9C;
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+  animation: bk-drop .62s both;
+  animation-delay: calc(var(--k) * var(--step) + 120ms);
+}
+.bk-cube .t { fill: #DCE6FF; }
+.bk-cube .l { fill: #AAC1F6; }
+.bk-cube .r { fill: #7E9EE7; }
+
+/* Each cube falls, lands, and gives one small bounce. Units are SVG units,
+   so the fall scales with the cubes. */
+@keyframes bk-drop {
+  0% { opacity: 0; transform: translateY(-80px); animation-timing-function: cubic-bezier(.5, 0, .85, .4); }
+  12% { opacity: 1; }
+  55% { transform: translateY(0); animation-timing-function: cubic-bezier(.25, .8, .45, 1); }
+  72% { transform: translateY(-7px); animation-timing-function: cubic-bezier(.55, 0, .75, .5); }
+  86% { transform: translateY(0); animation-timing-function: ease-out; }
+  93% { transform: translateY(-1.5px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* The whole pile gives a happy little squash when the count is right. */
+.bk-view.solved svg { animation: bk-cheer .6s var(--soft-spring); transform-origin: 50% 70%; }
+@keyframes bk-cheer {
+  35% { transform: scale(1.05, .95); }
+  70% { transform: scale(.98, 1.03); }
+}
+
+/* Hold the answers back a moment so the eye goes to the pile first. */
+.stage:has(> .bk-view) > .choices .choice:not(.right) {
+  animation-delay: calc(var(--i) * 45ms + 420ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-cube,
+  .stage:has(> .bk-view) > .choices .choice { animation-delay: 0s !important; }
+}

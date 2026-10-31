@@ -1,0 +1,93 @@
+/* Plus, Minus, Times, Divide: one big sum on a card, six answers below.
+   Flat pastel: a card in the game's soft tint, dark digits, the operator in
+   the game's deep ink, and the unknown in a white bubble that turns green
+   when solved. */
+
+.math-card {
+  position: relative;
+  width: 100%;
+  padding: 64px 10px;
+  border-radius: 32px;
+  background: var(--tint);
+  animation: math-card-in .55s var(--soft-spring) both;
+}
+
+/* A few faint copies of the game's own sign in two corners, for texture.
+   They sit behind the sum and stay clear of it. */
+.math-deco {
+  position: absolute;
+  z-index: 0;
+  width: 54px;
+  height: 54px;
+  color: #fff;
+  opacity: .8;
+  pointer-events: none;
+}
+.math-deco.tl { top: 9px; left: 11px; }
+.math-deco.br { right: 11px; bottom: 9px; transform: rotate(180deg); }
+
+.math-eq {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: .1em;
+  width: max-content;
+  margin: 0 auto;
+  font-size: 4.4rem;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.math-eq > * {
+  animation: math-in .5s var(--spring) both;
+  animation-delay: calc(var(--i) * 70ms + 90ms);
+}
+.math-op, .math-is { font-size: .8em; }
+.math-op { color: var(--accent); }
+.math-is { color: var(--soft); }
+
+/* The answer slot. A hidden ghost of the widest option sets its size, and
+   the ? or the answer sits on top in the same grid cell. */
+.math-ans {
+  display: grid;
+  place-items: center;
+  margin-left: .06em;
+  padding: .1em .18em;
+  border: 2px solid var(--card);
+  border-radius: .3em;
+  background: var(--card);
+  color: var(--accent);
+  transition: background-color .3s, border-color .3s, color .3s;
+}
+.math-ans > * { grid-area: 1 / 1; }
+.math-ghost { visibility: hidden; }
+.math-q { display: block; }
+.math-ans:not(.solved) .math-q { animation: math-breathe 2.8s ease-in-out infinite; }
+.math-ans.solved { background: var(--good-tint); border-color: #8FD3A8; color: #155F38; }
+
+.math-ans.math-wobble { animation: math-wobble .5s var(--ease); }
+.math-ans.math-bump { animation: math-bump .6s var(--spring); }
+.math-q.math-pop { animation: math-pop .55s var(--spring) both; }
+
+@keyframes math-card-in { from { opacity: 0; transform: translateY(18px) scale(.94); } }
+@keyframes math-in { from { opacity: 0; transform: translateY(14px) scale(.6); } }
+@keyframes math-breathe { 50% { transform: scale(1.1); } }
+@keyframes math-wobble {
+  25% { transform: rotate(-7deg); }
+  55% { transform: rotate(5deg); }
+  80% { transform: rotate(-2deg); }
+}
+@keyframes math-bump {
+  0% { transform: scale(.9); }
+  45% { transform: scale(1.16); }
+  100% { transform: scale(1); }
+}
+@keyframes math-pop { from { opacity: 0; transform: scale(.3); } }
+
+@media (max-height: 720px) {
+  .math-card { padding: 46px 10px; }
+  .math-deco { width: 42px; height: 42px; }
+}

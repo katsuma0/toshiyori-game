@@ -1,0 +1,289 @@
+/* Coins: a little shop counter above a money tray. Flat fills, 2px lines,
+   no shadows or shine. Coins keep their metal colours, money drops in with
+   a springy bounce. Everything is scoped under .cash-* so nothing leaks. */
+
+.cash-board {
+  --base: clamp(56px, 9.8dvh, 84px);
+  /* --fit is lowered from script when the screen is too short for it all. */
+  --coin: calc(var(--base) * var(--fit, 1));
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(18px * var(--fit, 1));
+}
+.cash-board.few { --base: clamp(62px, 11.4dvh, 98px); }
+.cash-board.many { --base: clamp(52px, 9.1dvh, 76px); }
+
+/* ---------- Shop counter ---------- */
+
+.cash-shop {
+  position: relative;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  min-height: calc(clamp(116px, 17dvh, 150px) * var(--fit, 1));
+  padding: 14px 12px 28px;
+  border-radius: 28px;
+  background: var(--card);
+  border: 2px solid var(--line);
+  overflow: hidden;
+  container-type: inline-size;
+  animation: cash-pop .5s var(--spring) both;
+}
+/* The counter top the items stand on. */
+.cash-shop::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34px;
+  background: var(--tint);
+  border-top: 2px solid var(--line-strong);
+}
+
+.cash-shelf {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  transition: opacity .25s var(--ease), transform .45s var(--spring);
+}
+.cash-item {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+.cash-item .emoji {
+  font-size: calc(clamp(3.3rem, 8.6dvh, 4.6rem) * var(--fit, 1));
+  animation: cash-pop .55s var(--spring) both .05s;
+}
+.v-two .cash-shelf { gap: 6px; }
+.v-two .cash-item { flex-direction: column; align-items: center; gap: 2px; }
+.v-two .cash-item .emoji { font-size: calc(clamp(3rem, 7.6dvh, 4.1rem) * var(--fit, 1)); }
+/* Two tags side by side: sized to the counter so long prices still fit. */
+.v-two .cash-tag { font-size: calc(min(1.9rem, 8.6cqi) * var(--tag, 1)); padding: .08em .4em .08em .8em; }
+.v-two .cash-tag::before { left: .26em; }
+.v-two .cash-item + .cash-plus + .cash-item .emoji { animation-delay: .15s; }
+.cash-plus {
+  align-self: center;
+  margin-top: 1.4rem;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--soft);
+}
+
+/* Price tag: a swing tag with a string hole, tilted a touch. */
+.cash-tag {
+  position: relative;
+  padding: .1em .5em .1em .92em;
+  border-radius: 16px;
+  background: #FFF8E1;
+  border: 2px solid var(--line-strong);
+  color: var(--ink);
+  font-size: calc(clamp(1.7rem, 4.4dvh, 2.2rem) * var(--tag, 1));
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  white-space: nowrap;
+  transform: rotate(-3deg);
+  animation: cash-swing .7s var(--spring) both .15s;
+}
+.cash-tag::before {
+  content: '';
+  position: absolute;
+  left: .3em;
+  top: 50%;
+  width: .3em;
+  height: .3em;
+  margin-top: -.15em;
+  border-radius: 50%;
+  background: var(--card);
+  border: 2px solid var(--line-strong);
+}
+.v-two .cash-item:last-child .cash-tag { transform: rotate(3deg); animation-delay: .25s; }
+.cash-money small { font-size: .7em; font-weight: 900; }
+.cash-money small:first-child { margin-right: .04em; }
+
+/* Count: the total waits on a dashed tag hung on the tray, then fills in. */
+.v-count .cash-tray { padding-top: 46px; margin-top: 30px; }
+.cash-tray > .cash-ask {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  translate: -50% 0;
+  min-width: 3.6em;
+  padding: .05em .7em .05em 1em;
+  border-style: dashed;
+  border-color: var(--accent);
+  background: var(--card);
+  color: var(--accent);
+  text-align: center;
+  transition: background-color .25s, border-color .25s, color .25s;
+}
+.cash-tray > .cash-ask.filled {
+  background: var(--good-tint);
+  border-style: solid;
+  border-color: #8FD3A8;
+  color: #155F38;
+  animation: cash-bump .5s var(--spring);
+}
+
+/* The worked sum appears on the counter once the answer is found. */
+.cash-math {
+  position: absolute;
+  inset: 10px 10px 10px;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  gap: 0 .35em;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: var(--good-tint);
+  border: 2px solid #8FD3A8;
+  color: #155F38;
+  font-size: clamp(1.25rem, 3.4dvh, 1.55rem);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  text-align: center;
+  opacity: 0;
+  transform: scale(.7);
+  pointer-events: none;
+  transition: opacity .2s var(--ease), transform .5s var(--spring);
+}
+.cash-math span, .cash-math b { white-space: nowrap; }
+.cash-math b { font-size: 1.15em; }
+.cash-board.solved .cash-math { opacity: 1; transform: none; }
+.cash-board.solved .cash-shelf { opacity: 0; transform: scale(.88); }
+
+/* ---------- Money tray ---------- */
+
+.cash-tray {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  gap: 10px 8px;
+  min-height: calc(var(--coin) + 40px);
+  padding: 20px 12px;
+  border-radius: 28px;
+  background: var(--tint);
+  border: 2px solid var(--line-strong);
+}
+/* The label pill sits centred on the tray's top edge, and a labelled tray
+   keeps its money clear of it at any text size. */
+.cash-tray.labelled { padding-top: calc(.75rem + 16px); }
+.cash-label {
+  position: absolute;
+  top: calc(-.75rem - 6px);
+  left: 18px;
+  padding: 2px 14px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 2px solid var(--line-strong);
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 900;
+  line-height: 1.5;
+}
+
+.cash-piece {
+  display: block;
+  flex: none;
+  width: calc(var(--coin) * var(--s, 1));
+  animation: cash-drop .62s var(--spring) both;
+  animation-delay: calc(var(--i) * 110ms + 140ms);
+}
+.cash-piece svg { transform: rotate(var(--r, 0deg)); }
+.cash-piece.is-bill { width: calc(var(--coin) * 1.9); animation-name: cash-slide; }
+.cash-piece.landed { animation: cash-land .6s var(--spring) both; }
+
+/* Missing coin: a dashed gap in the tray, gently breathing. */
+.cash-slot {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: calc(var(--coin) * .92);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 3px dashed var(--accent);
+  background: var(--card);
+  color: var(--accent);
+  font-size: calc(var(--coin) * .42);
+  font-weight: 900;
+  animation: cash-drop .62s var(--spring) both, cash-breathe 2s ease-in-out infinite 1.4s;
+  animation-delay: calc(var(--i) * 110ms + 140ms), calc(var(--i) * 110ms + 900ms);
+}
+
+/* ---------- Answer buttons ---------- */
+
+.cash-choices { container-type: inline-size; }
+.cash-choices .choice {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+}
+/* Answers wait for the money to land. Not on .right, so its bump is instant. */
+.cash-choices .choice:not(.right) { animation-delay: calc(var(--i) * 45ms + 120ms + var(--lead, 0ms)); }
+/* Money answers: one size for the whole row, as big as the longest label
+   allows (--fs is measured in script), so "$12.85" and "10,000円" never
+   spill out of their buttons. */
+.cash-choices.money-ask .choice {
+  font-size: var(--fs, 2.05rem);
+  letter-spacing: -.01em;
+}
+/* Long amounts get two wide columns (set from script when three would
+   make the text small). */
+.cash-choices.wide { grid-template-columns: repeat(2, 1fr); }
+/* Coin answers: the coin fills its button so the value on it reads easily. */
+.cash-choices.pictures-ask .choice { padding-block: 3px; }
+.cash-pick { display: block; width: calc(min(76px, 21cqi) * var(--s, 1)); }
+.cash-pick.is-bill { width: min(104px, 27cqi); }
+.cash-choices .choice.right .cash-pick { animation: cash-bump .5s var(--spring); }
+
+/* ---------- Motion ---------- */
+
+@keyframes cash-drop {
+  from { opacity: 0; transform: translateY(-80px) scale(.6) rotate(-50deg); }
+  50% { opacity: 1; }
+}
+@keyframes cash-slide {
+  from { opacity: 0; transform: translateX(-70px) rotate(-10deg) scale(.85); }
+}
+@keyframes cash-land {
+  0% { opacity: 0; transform: translateY(-110px) scale(1.3); }
+  55% { opacity: 1; transform: translateY(0) scale(.92); }
+  75% { transform: scale(1.06); }
+}
+@keyframes cash-pop { from { opacity: 0; transform: scale(.7); } }
+@keyframes cash-swing {
+  0% { opacity: 0; transform: rotate(-24deg) translateY(-10px); }
+  60% { opacity: 1; transform: rotate(4deg); }
+}
+.v-two .cash-item:last-child .cash-tag { animation-name: cash-swing-r; }
+@keyframes cash-swing-r {
+  0% { opacity: 0; transform: rotate(24deg) translateY(-10px); }
+  60% { opacity: 1; transform: rotate(-4deg); }
+}
+@keyframes cash-bump { 40% { transform: scale(1.12); } }
+@keyframes cash-breathe { 50% { transform: scale(1.06); } }
+
+@media (max-height: 720px) {
+  .cash-board { gap: calc(14px * var(--fit, 1)); }
+  .cash-shop { padding: 10px 10px 22px; }
+  .cash-shop::after { height: 28px; }
+  .cash-tray { padding: 16px 10px 12px; gap: 6px; }
+  .cash-tray.labelled { padding-top: calc(.75rem + 12px); }
+  .cash-pick { width: calc(min(64px, 18cqi) * var(--s, 1)); }
+}
