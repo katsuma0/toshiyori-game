@@ -1,7 +1,7 @@
 // Everything lives in localStorage on the phone. No accounts, no network, so the
 // App Store privacy label can honestly say "Data Not Collected".
 
-const KEY = 'brain-garden-v1';
+const KEY = 'brain-garden-v2';
 
 function load() {
   try {
@@ -42,6 +42,11 @@ export function record(id, stars) {
   data.played[id] = today();
   save();
   return { before, after };
+}
+
+export function markPlayed(id) {
+  data.played[id] = today();
+  save();
 }
 
 export function playedToday(id) {

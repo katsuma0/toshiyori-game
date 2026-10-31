@@ -2,7 +2,7 @@
   "name": "brain-garden",
   "version": "1.0.0",
   "private": true,
-  "description": "Five gentle brain games for older adults. iPhone app built with Capacitor.",
+  "description": "Ten gentle brain games for older adults, English and Japanese. iPhone app built with Capacitor.",
   "scripts": {
     "start": "npx --yes http-server www -p 8080 -c-1",
     "test": "node tools/playtest.js /tmp/shots",

@@ -3,6 +3,7 @@
 // the first thing age related hearing loss takes away.
 
 import { settings } from './store.js';
+import { burst } from './particles.js';
 
 let ctx = null;
 let master = null;
@@ -115,8 +116,9 @@ export const fx = {
     note(penta(i), { dur: 0.3, vol: 0.18 });
   },
   // Correct step inside a sequence. step 0..n-1 climbs two octaves.
-  step(i, n) {
+  step(i, n, at) {
     impact('MEDIUM', 15);
+    burst(at, '#2E9E5B', 8);
     const idx = n > 1 ? Math.round((i * 10) / (n - 1)) : 5;
     note(penta(idx), { dur: 0.6, vol: 0.24 });
   },
@@ -125,8 +127,9 @@ export const fx = {
     impact('LIGHT', 12);
     note(penta(i + 3), { dur: 0.7, vol: 0.24 });
   },
-  good() {
+  good(at) {
     impact('MEDIUM', 20);
+    burst(at);
     note(penta(7), { dur: 0.5, vol: 0.2 });
     note(penta(9), { at: 0.09, dur: 0.7, vol: 0.2 });
   },
@@ -139,6 +142,15 @@ export const fx = {
   round() {
     impact('HEAVY', 30);
     [5, 7, 9].forEach((s, k) => note(penta(s), { at: k * 0.08, dur: 0.6, vol: 0.18 }));
+  },
+  // Card flip: a quick soft paper "fwip".
+  flip() {
+    impact('LIGHT', 8);
+    note(penta(3), { dur: 0.12, vol: 0.1, type: 'triangle', bright: 0 });
+  },
+  // Coins and blocks landing.
+  clink(i = 0) {
+    note(penta(8 + (i % 3)), { dur: 0.25, vol: 0.08, bright: 0.6 });
   },
   star(k) {
     impact(k === 2 ? 'HEAVY' : 'MEDIUM', 25);

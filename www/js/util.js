@@ -54,3 +54,49 @@ export function tileGrid(values, cols, onTap, render = (v) => v) {
   });
   return { grid, tiles };
 }
+
+// A row of big answer bubbles. Resolves with the number of wrong taps once the
+// right one is found, so the player always finishes on a success.
+export function choices(host, options, correct, render = (v) => v, fx) {
+  const row = el('div', 'choices');
+  row.style.setProperty('--n', options.length);
+  host.append(row);
+  return new Promise((resolve) => {
+    let misses = 0;
+    options.forEach((v, i) => {
+      const b = el('button', 'choice', render(v));
+      b.type = 'button';
+      b.style.setProperty('--i', i);
+      if (v === correct) b.dataset.ok = '1';
+      b.addEventListener('pointerdown', async (e) => {
+        e.preventDefault();
+        if (row.classList.contains('locked') || b.classList.contains('nope')) return;
+        if (v === correct) {
+          row.classList.add('locked');
+          b.classList.add('right');
+          fx.good(b);
+          await wait(650);
+          resolve(misses);
+        } else {
+          misses++;
+          fx.bad();
+          b.classList.add('nope');
+          replay(b, 'shake');
+        }
+      });
+      row.append(b);
+    });
+  });
+}
+
+// Wrong answers that look plausible: close to the right one, distinct, positive.
+export function nearby(answer, spread, n = 2, step = 1) {
+  const out = new Set();
+  let guard = 0;
+  while (out.size < n && guard++ < 200) {
+    const d = rand(1, spread) * step * (Math.random() < 0.5 ? -1 : 1);
+    const v = answer + d;
+    if (v > 0 && v !== answer) out.add(v);
+  }
+  return shuffle([answer, ...out]);
+}

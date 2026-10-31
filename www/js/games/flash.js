@@ -1,0 +1,59 @@
+import { el, rand, shuffle, wait, choices } from '../util.js';
+import { t } from '../i18n.js';
+
+// A number shows for a moment, then hides. Pick it from three that look alike.
+const LEVELS = [null, [3, 1600], [4, 1500], [5, 1400], [6, 1400], [7, 1300]];
+
+function makeNumber(len) {
+  let s = String(rand(1, 9));
+  while (s.length < len) s += rand(0, 9);
+  return s;
+}
+
+// Decoys change one digit or swap two neighbours, which is what memory slips
+// actually look like.
+function decoy(s) {
+  const a = s.split('');
+  if (Math.random() < 0.5 && a.length > 1) {
+    const i = rand(0, a.length - 2);
+    if (a[i] !== a[i + 1]) {
+      [a[i], a[i + 1]] = [a[i + 1], a[i]];
+      return a.join('');
+    }
+  }
+  const i = rand(1, a.length - 1);
+  let d;
+  do d = String(rand(0, 9)); while (d === a[i]);
+  a[i] = d;
+  return a.join('');
+}
+
+const pretty = (s) => s.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+export default {
+  id: 'flash',
+  cat: 'memory',
+  color: '#C2255C',
+  rounds: 4,
+
+  async round(ctx) {
+    const [len, ms] = LEVELS[ctx.level];
+    const answer = makeNumber(len);
+    const opts = new Set([answer]);
+    while (opts.size < 3) opts.add(decoy(answer));
+
+    const board = el('div', 'flashboard', `<span class="digits">${pretty(answer)}</span>`);
+    ctx.stage.append(board);
+    ctx.setHint(null);
+    await wait(ms + 450);
+    if (!ctx.alive()) return { mistakes: 0 };
+    board.classList.add('hidden');
+    board.innerHTML = `<span class="digits">?</span>`;
+    ctx.say(t('which'));
+    ctx.fx.flip();
+    const misses = await choices(ctx.stage, shuffle([...opts]), answer, pretty, ctx.fx);
+    board.innerHTML = `<span class="digits">${pretty(answer)}</span>`;
+    board.classList.remove('hidden');
+    return { mistakes: misses };
+  },
+};

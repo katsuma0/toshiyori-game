@@ -1,14 +1,23 @@
 import { fx, unlockAudio } from './feedback.js';
 import { icons } from './icons.js';
-import { settings, save, levelOf, record, playedToday, hasPlayed } from './store.js';
-import { el, wait } from './util.js';
+import { settings, save, levelOf, record, playedToday, hasPlayed, markPlayed } from './store.js';
+import { t, gameName, gameHow, lang, setLang, locale } from './i18n.js';
+import { mascot } from './mascot.js';
+import { confetti } from './particles.js';
+import { el, wait, sample, replay } from './util.js';
 import order from './games/order.js';
 import sum from './games/sum.js';
+import coins from './games/coins.js';
 import odd from './games/odd.js';
-import more from './games/more.js';
-import memory from './games/memory.js';
+import copy from './games/copy.js';
+import lights from './games/lights.js';
+import pairs from './games/pairs.js';
+import flash from './games/flash.js';
+import heavy from './games/heavy.js';
+import blocks from './games/blocks.js';
 
-const GAMES = [order, sum, odd, more, memory];
+// Grouped by kind so neighbours on the home screen feel different.
+const GAMES = [order, odd, lights, heavy, sum, copy, pairs, blocks, coins, flash];
 const app = document.getElementById('app');
 let session = null;
 
@@ -16,20 +25,21 @@ document.addEventListener('pointerdown', unlockAudio, { once: true });
 
 function applySettings() {
   document.documentElement.classList.toggle('big-text', settings.bigText);
+  document.documentElement.lang = lang() === 'ja' ? 'ja' : 'en-CA';
 }
 
-// One screen on stage at a time. The old one fades back while the new one rises
-// in, both at once, so there is never a blank frame.
+// One screen at a time. The old one shrinks away while the new one bounces in,
+// both at once, so there is never a blank frame.
 function show(screen) {
-  const old = app.firstElementChild;
-  if (old) {
-    old.classList.add('leave');
-    old.inert = true;
-    setTimeout(() => old.remove(), 400);
-  }
+  const old = [...app.children].filter((c) => !c.classList.contains('leave'));
+  old.forEach((o) => {
+    o.classList.add('leave');
+    o.inert = true;
+    setTimeout(() => o.remove(), 450);
+  });
   screen.classList.add('screen', 'enter');
   app.append(screen);
-  screen.addEventListener('animationend', () => screen.classList.remove('enter'), { once: true });
+  screen.addEventListener('animationend', (e) => e.target === screen && screen.classList.remove('enter'));
 }
 
 function button(cls, iconSvg, label, onClick) {
@@ -44,11 +54,11 @@ function button(cls, iconSvg, label, onClick) {
 
 function greeting() {
   const h = new Date().getHours();
-  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  return t(h < 11 ? 'morning' : h < 18 ? 'afternoon' : 'evening');
 }
 
 function levelDots(lv) {
-  return `<span class="level" aria-label="Level ${lv} of 5">${[1, 2, 3, 4, 5]
+  return `<span class="level" role="img" aria-label="${t('level', lv)}">${[1, 2, 3, 4, 5]
     .map((k) => `<i class="${k <= lv ? 'on' : ''}"></i>`)
     .join('')}</span>`;
 }
@@ -58,84 +68,109 @@ function levelDots(lv) {
 function home() {
   session = null;
   const s = el('main', 'home');
-  const date = new Date().toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' });
-  s.append(el('header', 'hello', `<p class="date">${date}</p><h1>${greeting()}</h1>`));
+  const date = new Date().toLocaleDateString(locale(), { weekday: 'long', month: 'long', day: 'numeric' });
+  const head = el('header', 'hello');
+  const m = mascot('idle', 76);
+  m.addEventListener('pointerdown', () => {
+    replay(m, 'boing');
+    fx.select(7);
+  });
+  head.append(m, el('div', 'hello-text', `<p class="date">${date}</p><h1>${greeting()}</h1>`));
+  s.append(head);
 
-  const list = el('div', 'cards');
+  const scroll = el('div', 'home-scroll');
+  const big = el('button', `play-all${playedToday('today') ? ' played' : ''}`, `<span class="play-icon">${icons.play}</span><span class="play-text"><strong>${t('today')}</strong><small>${t('todaySub')}</small></span>${playedToday('today') ? `<span class="tick">${icons.check}</span>` : ''}`);
+  big.type = 'button';
+  big.addEventListener('click', () => {
+    fx.press();
+    playMix();
+  });
+  scroll.append(big);
+
+  const list = el('div', 'tiles');
   GAMES.forEach((g, i) => {
     const done = playedToday(g.id);
     const card = el(
       'button',
-      `card${done ? ' played' : ''}`,
-      `<span class="badge" style="background:${g.color}">${icons[g.id]}</span>
-       <span class="label"><strong>${g.name}</strong><small>${g.blurb}</small></span>
-       <span class="go">${done ? `<span class="tick">${icons.check}</span>` : icons.arrow}</span>`,
+      `game-tile${done ? ' played' : ''}`,
+      `<span class="badge" style="--c:${g.color}">${icons[g.id]}</span>
+       <strong>${gameName(g.id)}</strong>
+       ${done ? `<span class="tick">${icons.check}</span>` : ''}`,
     );
     card.type = 'button';
     card.style.setProperty('--i', i);
-    card.setAttribute('aria-label', `${g.name}. ${g.blurb}.${done ? ' Played today.' : ''}`);
+    card.style.setProperty('--c', g.color);
+    card.setAttribute('aria-label', `${gameName(g.id)}. ${gameHow(g.id, 10)}.${done ? ` ${t('played')}.` : ''}`);
     card.addEventListener('click', () => {
       fx.press();
-      play(g);
+      play([g], g.rounds);
     });
     list.append(card);
   });
-  s.append(list);
+  scroll.append(list);
+  s.append(scroll);
 
   const toggles = el('footer', 'toggles');
-  const toggle = (key, on, off, label) => {
+  const toggle = (key, on, off, label, flip = () => (settings[key] = !settings[key])) => {
     const b = el('button', 'toggle');
     b.type = 'button';
     const paint = () => {
-      b.innerHTML = `${settings[key] ? on : off}<span>${label}</span>`;
-      b.setAttribute('aria-pressed', settings[key]);
+      b.innerHTML = `${settings[key] === false ? off : on}<span>${label()}</span>`;
+      if (key !== 'lang') b.setAttribute('aria-pressed', !!settings[key]);
     };
     paint();
     b.addEventListener('click', () => {
-      settings[key] = !settings[key];
+      flip();
       save();
       applySettings();
-      paint();
       fx.press();
+      replay(b, 'boing');
+      // Language changes every word on the page, so rebuild it.
+      if (key === 'lang') home();
+      else paint();
     });
     return b;
   };
   toggles.append(
-    toggle('sound', icons.soundOn, icons.soundOff, 'Sound'),
-    toggle('haptics', icons.vibrate, icons.vibrateOff, 'Buzz'),
-    toggle('bigText', icons.text, icons.text, 'Big text'),
+    toggle('sound', icons.soundOn, icons.soundOff, () => t('sound')),
+    toggle('haptics', icons.vibrate, icons.vibrateOff, () => t('buzz')),
+    toggle('bigText', icons.text, icons.text, () => t('bigText')),
+    toggle('lang', icons.globe, icons.globe, () => t('lang'), () => setLang(lang() === 'ja' ? 'en' : 'ja')),
   );
   s.append(toggles);
   show(s);
 }
 
-// ---------- A game session ----------
+// ---------- A session: one game several times, or a mix of games once each ----------
 
-async function play(game) {
+function playMix() {
+  play(sample(GAMES, 5), 1, true);
+}
+
+async function play(list, roundsEach, mix = false) {
   const me = {};
   session = me;
   const alive = () => session === me;
-  const level = levelOf(game.id);
   const started = Date.now();
-  // First timers get a nudge sooner. Everyone gets one eventually.
-  const hintDelay = hasPlayed(game.id) ? 7000 : 4000;
+  const plan = list.flatMap((g) => Array(roundsEach).fill(g));
 
   const s = el('main', 'play');
-  s.style.setProperty('--accent', game.color);
   const top = el('header', 'bar');
-  top.append(button('home-btn', icons.home, 'Home', home));
-  top.append(el('div', 'title', `<span class="badge small" style="background:${game.color}">${icons[game.id]}</span><span>${game.name}</span>`));
+  top.append(button('home-btn', icons.home, t('home'), home));
+  const title = el('div', 'title');
+  top.append(title);
   const bar = el('div', 'progress', '<i></i>');
   const fill = bar.firstElementChild;
-  const instr = el('p', 'instruction', game.instruction(level));
+  const instr = el('p', 'instruction');
   const stage = el('section', 'stage');
   const flash = el('div', 'flash', icons.check);
   s.append(top, bar, instr, stage, flash);
   show(s);
 
-  let round = 0;
+  let step = 0;
   let hintFn = null;
   let hintTimer = 0;
+  let hintDelay = 7000;
   const clearNudge = () => stage.querySelectorAll('.nudge').forEach((n) => n.classList.remove('nudge'));
   const armHint = () => {
     clearTimeout(hintTimer);
@@ -148,73 +183,89 @@ async function play(game) {
   };
   stage.addEventListener('pointerdown', armHint);
 
-  const ctx = {
-    stage,
-    level,
-    fx,
-    alive,
-    setHint(fn) {
-      hintFn = fn;
-      armHint();
-    },
-    progress(f) {
-      fill.style.width = `${((round + f) / game.rounds) * 100}%`;
-    },
-  };
-
   let mistakes = 0;
-  await wait(350);
-  for (round = 0; round < game.rounds; round++) {
+  await wait(380);
+  for (step = 0; step < plan.length; step++) {
     if (!alive()) return;
+    const game = plan[step];
+    // First timers get a nudge sooner. Everyone gets one eventually.
+    hintDelay = hasPlayed(game.id) ? 7000 : 4000;
+    s.style.setProperty('--accent', game.color);
+    title.innerHTML = `<span class="badge small" style="--c:${game.color}">${icons[game.id]}</span><span>${gameName(game.id)}</span>`;
+    const say = (arg) => {
+      instr.textContent = typeof arg === 'number' ? gameHow(game.id, arg) : arg;
+      replay(instr, 'pop');
+    };
+    say(gameHow(game.id, 10));
     stage.replaceChildren();
     stage.classList.remove('out');
+    replay(stage, 'stage-in');
+    hintFn = null;
+
+    const ctx = {
+      stage,
+      level: levelOf(game.id),
+      fx,
+      alive,
+      say,
+      setHint(fn) {
+        hintFn = fn;
+        armHint();
+      },
+      progress(f) {
+        fill.style.width = `${((step + Math.min(1, f)) / plan.length) * 100}%`;
+      },
+    };
     const r = await game.round(ctx);
     clearTimeout(hintTimer);
     if (!alive()) return;
     mistakes += r.mistakes;
     ctx.progress(1);
     fx.round();
-    flash.classList.remove('show');
-    void flash.offsetWidth;
-    flash.classList.add('show');
+    replay(flash, 'show');
     stage.classList.add('out');
-    await wait(750);
+    await wait(800);
   }
   if (!alive()) return;
-  results(game, mistakes, Date.now() - started);
+  results(list, mix, mistakes, Date.now() - started);
 }
 
 // ---------- Results ----------
 
-function results(game, mistakes, ms) {
+function results(list, mix, mistakes, ms) {
   const stars = mistakes === 0 ? 3 : mistakes <= 2 ? 2 : 1;
-  const { before, after } = record(game.id, stars);
-  const words = ['', 'Good effort!', 'Well done!', 'Excellent!'][stars];
+  const game = list[0];
+  let change = null;
+  if (mix) markPlayed('today');
+  else change = record(game.id, stars);
+
   const mins = Math.floor(ms / 60000);
   const secs = Math.round((ms % 60000) / 1000);
-  const time = mins ? `${mins} min ${secs} sec` : `${secs} seconds`;
+  const time = mins ? t('mins', mins, secs) : t('secs', secs);
+  const accent = mix ? '#2E9E5B' : game.color;
 
   const s = el('main', 'results');
-  s.style.setProperty('--accent', game.color);
+  s.style.setProperty('--accent', accent);
+  s.append(mascot(stars === 3 ? 'happy' : stars === 2 ? 'glad' : 'idle', 120));
   const starRow = el('div', 'stars', [0, 1, 2].map((k) => `<span class="star${k < stars ? ' got' : ''}" style="--k:${k}">${icons.star}</span>`).join(''));
-  starRow.setAttribute('aria-label', `${stars} out of 3 stars`);
-  s.append(
-    el('div', 'badge big', icons[game.id]),
-    starRow,
-    el('h1', '', words),
-    el('p', 'meta', `${game.name} · ${time}`),
-  );
-  s.querySelector('.badge').style.background = game.color;
-  if (after !== before) {
-    s.append(el('p', 'levelup', after > before ? `Level up! Now level ${after}` : `Next time a little easier`));
+  starRow.setAttribute('role', 'img');
+  starRow.setAttribute('aria-label', t('stars', stars));
+  s.append(starRow, el('h1', '', t('great')[stars]), el('p', 'meta', `${mix ? t('today') : gameName(game.id)} · ${time}`));
+  if (change && change.after !== change.before) {
+    s.append(el('p', 'levelup', change.after > change.before ? `${t('levelUp')} ${levelDots(change.after)}` : t('easier')));
+  } else if (change) {
+    s.append(el('div', 'lv', levelDots(change.after)));
   }
-  s.append(el('div', 'lv', levelDots(after)));
   const actions = el('div', 'actions');
-  actions.append(button('primary', icons.replay, 'Play again', () => play(game)), button('secondary', icons.home, 'Home', home));
+  actions.append(
+    button('primary', icons.replay, t('again'), () => (mix ? playMix() : play([game], game.rounds))),
+    button('secondary', icons.home, t('home'), home),
+  );
   s.append(actions);
   show(s);
 
   fx.win();
+  if (stars === 3) setTimeout(() => confetti(), 500);
   for (let k = 0; k < stars; k++) setTimeout(() => fx.star(k), 450 + k * 280);
 }
 

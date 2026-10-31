@@ -5,24 +5,23 @@ import { el, pick, range, sample, shuffle, tileGrid, replay, wait } from '../uti
 // leaves a solvable board. Nobody gets stuck with two leftovers that do not fit.
 const LEVELS = [
   null,
-  { targets: [10], pairs: 3, cols: 3 },
   { targets: [10], pairs: 4, cols: 4 },
   { targets: [11, 12, 13, 14, 15], pairs: 4, cols: 4 },
-  { targets: [12, 14, 15, 16, 18, 20], pairs: 5, cols: 4 },
-  { targets: [15, 18, 20, 21, 24, 25], pairs: 6, cols: 4 },
+  { targets: [14, 15, 16, 18, 20], pairs: 5, cols: 4 },
+  { targets: [18, 20, 21, 24, 25], pairs: 6, cols: 4 },
+  { targets: [25, 30, 35, 40, 50], pairs: 6, cols: 4 },
 ];
 
 export default {
   id: 'sum',
-  name: 'Make the Number',
-  blurb: 'Find two that add up',
-  color: '#C2410C',
-  rounds: 3,
-  instruction: () => 'Tap two numbers that add up to the big number',
+  cat: 'math',
+  color: '#E8590C',
+  rounds: 2,
 
   round(ctx) {
     const cfg = LEVELS[ctx.level];
     const T = pick(cfg.targets);
+    ctx.say(T);
     // Use a different pair each time (1+9, 2+8, ...) so the board looks varied.
     // Half-and-half pairs like 5 + 5 are left out for the same reason.
     const values = sample(range(1, Math.ceil(T / 2) - 1), cfg.pairs).flatMap((a) => [a, T - a]);
@@ -62,7 +61,7 @@ export default {
         grid.classList.add('locked');
 
         if (+a.dataset.value + v === T) {
-          ctx.fx.good();
+          ctx.fx.good(t);
           t.classList.add('picked');
           await wait(220);
           a.classList.add('done', 'gone');
