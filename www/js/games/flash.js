@@ -16,7 +16,9 @@ function decoy(s) {
   const a = s.split('');
   if (Math.random() < 0.5 && a.length > 1) {
     const i = rand(0, a.length - 2);
-    if (a[i] !== a[i + 1]) {
+    // Never swap a 0 to the front: no real number starts with 0, so it would
+    // give itself away.
+    if (a[i] !== a[i + 1] && !(i === 0 && a[1] === '0')) {
       [a[i], a[i + 1]] = [a[i + 1], a[i]];
       return a.join('');
     }
@@ -28,7 +30,9 @@ function decoy(s) {
   return a.join('');
 }
 
-const pretty = (s) => s.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+// A no-break space groups the digits without ever letting a number split
+// across two lines. The narrow kind is too thin to see at this size.
+const pretty = (s) => s.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0');
 
 export default {
   id: 'flash',
@@ -53,7 +57,11 @@ export default {
     board.innerHTML = `<span class="digits">?</span>`;
     ctx.say(t('which'));
     ctx.fx.flip();
-    const misses = await choices(ctx.stage, shuffle([...opts]), answer, pretty, ctx.fx);
+    const picked = choices(ctx.stage, shuffle([...opts]), answer, pretty, ctx.fx);
+    // Five digits and up do not fit three across at a readable size, so the
+    // six answers go two across instead.
+    if (len >= 5) ctx.stage.querySelector('.choices').classList.add('wide');
+    const misses = await picked;
     board.innerHTML = `<span class="digits">${pretty(answer)}</span>`;
     board.classList.remove('hidden');
     return { mistakes: misses };

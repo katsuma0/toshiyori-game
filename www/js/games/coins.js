@@ -451,9 +451,9 @@ export function nextVariant(level, fresh = false) {
 // ---------- Screen ----------
 
 const SAY = {
-  count: { en: 'How much money?', ja: 'ぜんぶでいくら？' },
-  change: { en: 'How much change?', ja: 'おつりはいくら？' },
-  missing: { en: 'Which coin is missing?', ja: 'あと どのコイン？' },
+  count: { en: 'How much money?', ja: 'ぜんぶで いくら？' },
+  change: { en: 'How much change?', ja: 'おつりは いくら？' },
+  missing: { en: 'Which coin is missing?', ja: 'たりないのは どれ？' },
   two: { en: 'How much for both?', ja: 'ふたつで いくら？' },
   left: { en: 'How much is left?', ja: 'のこりは いくら？' },
 };
@@ -515,7 +515,11 @@ function board(p) {
     shelf.append(shopItem(p.item, p.price, l));
   }
   const [sum, result] = sentence(p, l);
-  shop.append(shelf, el('div', 'cash-math', `<span>${sum}</span><b>= ${result}</b>`));
+  // Opacity hides the worked sum from eyes but not from VoiceOver, so it stays
+  // out of the accessibility tree until the round is solved.
+  const math = el('div', 'cash-math', `<span>${sum}</span><b>= ${result}</b>`);
+  math.setAttribute('aria-hidden', 'true');
+  shop.append(shelf, math);
   b.append(shop);
 
   if (p.variant === 'change') b.append(tray(p.pay, l, LABEL.pay[l]));
@@ -535,6 +539,7 @@ function board(p) {
 function reveal(b, p, ctx) {
   const l = p.lang;
   b.classList.add('solved');
+  b.querySelector('.cash-math')?.removeAttribute('aria-hidden');
   if (p.variant === 'count') {
     const ask = b.querySelector('.cash-ask');
     ask.innerHTML = moneyHTML(p.answer, l);

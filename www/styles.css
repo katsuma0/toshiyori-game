@@ -128,19 +128,23 @@ svg { display: block; width: 100%; height: 100%; }
 .hello-text { flex: 1; min-width: 0; }
 .hello .date { color: var(--soft); font-size: .95rem; font-weight: 700; }
 .hello h1 { font-size: 1.7rem; line-height: 1.12; font-weight: 900; letter-spacing: -.01em; }
+/* Japanese never starts a line with a small kana or splits a word mid-way. */
+html[lang="ja"] { line-break: strict; }
+.game-tile strong { word-break: keep-all; }
 html[lang="ja"] .hello h1 { font-size: 1.45rem; line-height: 1.25; }
 
 .gear-btn {
   flex-direction: column;
   gap: 2px;
   min-height: 0;
-  width: 76px;
+  min-width: 76px;
   height: 76px;
-  padding: 8px 4px;
+  padding: 8px 10px;
   border-radius: 22px;
   background: var(--card);
   border: 2px solid var(--line);
-  font-size: .8rem;
+  /* The one word under the gear is still reading text: never below 17px. */
+  font-size: max(.8rem, 17px);
   line-height: 1.1;
 }
 .gear-btn svg { width: 32px; height: 32px; }
@@ -231,6 +235,7 @@ html[lang="ja"] .hello h1 { font-size: 1.45rem; line-height: 1.25; }
   transition: transform .45s var(--soft-spring);
 }
 .veil.open .sheet { transform: none; }
+.veil.closing { pointer-events: none; }
 .veil.closing .sheet { transform: translateY(100%); transition: transform .3s var(--ease); }
 .grabber { width: 54px; height: 6px; margin: 2px auto 10px; border-radius: 9px; background: var(--line-strong); }
 .sheet h2 { font-size: 1.6rem; font-weight: 900; margin: 0 4px 12px; }
@@ -247,9 +252,10 @@ html[lang="ja"] .hello h1 { font-size: 1.45rem; line-height: 1.25; }
   text-align: left;
 }
 .row-icon { width: 46px; height: 46px; padding: 9px; border-radius: 14px; background: #EFE8DB; flex: none; }
-.row-label { flex: 1; font-size: 1.25rem; font-weight: 800; }
+.row-label { flex: 1; font-size: 1.25rem; font-weight: 800; word-break: keep-all; }
 .pill {
   min-width: 92px;
+  white-space: nowrap;
   padding: 10px 14px;
   border-radius: 999px;
   background: #EFE8DB;
@@ -285,14 +291,16 @@ html[lang="ja"] .hello h1 { font-size: 1.45rem; line-height: 1.25; }
   gap: 8px;
   min-width: 0;
   font-weight: 800;
-  font-size: 1.05rem;
+  font-size: min(1.05rem, 4.2vw);
   color: var(--soft);
   animation: pop-in .4s var(--spring);
 }
 .bar .title > span:last-child {
-  /* Long names like ストップウォッチ must stay one line beside the Home button. */
+  /* Long Japanese names break only at their marked word gap, onto a second
+     line, rather than being cut short. */
   min-width: 0;
-  white-space: nowrap;
+  word-break: keep-all;
+  line-height: 1.1;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -343,7 +351,9 @@ html[lang="ja"] .hello h1 { font-size: 1.45rem; line-height: 1.25; }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(var(--cols), 1fr);
+  /* minmax(0, ...) so a 3-digit number can never widen its column past the
+     screen edge. */
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
   gap: clamp(8px, 2.4vw, 12px);
   width: min(100%, 56dvh);
   container-type: inline-size;
@@ -358,9 +368,11 @@ html[lang="ja"] .hello h1 { font-size: 1.45rem; line-height: 1.25; }
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   font-size: calc(100cqi / var(--cols) * .42);
+  padding: 0;
   animation: pop-in .5s var(--spring) both;
   animation-delay: calc(var(--i) * 20ms);
 }
+.grid.three-digits .tile { font-size: calc(100cqi / var(--cols) * .32); }
 .tile:active { transform: scale(.9); transition-duration: .06s; }
 @keyframes pop-in { from { opacity: 0; transform: scale(.5); } }
 
@@ -406,10 +418,16 @@ html[lang="ja"] .hello h1 { font-size: 1.45rem; line-height: 1.25; }
    screen, easy to reach with a thumb. Fewer options share one row. */
 .choices {
   display: grid;
-  grid-template-columns: repeat(min(var(--n), 3), 1fr);
+  /* minmax(0, ...) so one long answer can never push the row off screen. */
+  grid-template-columns: repeat(min(var(--n), 3), minmax(0, 1fr));
   gap: 10px;
   width: 100%;
 }
+/* Flash uses two wide columns once its numbers reach five digits. */
+.choices.wide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stage:has(.flashboard) .choice { white-space: nowrap; font-size: min(2rem, 8.6vw); }
+.stage:has(.flashboard) .choices.wide .choice { font-size: min(2rem, 7.6vw); }
+
 .choice {
   min-height: 84px;
   padding: 6px 4px;
@@ -442,7 +460,8 @@ html[lang="ja"] .hello h1 { font-size: 1.45rem; line-height: 1.25; }
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 2rem;
+  /* Capped by width so Big text never pushes the sum off the screen. */
+  font-size: min(2rem, 9vw);
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
@@ -496,7 +515,7 @@ html[lang="ja"] .hello h1 { font-size: 1.45rem; line-height: 1.25; }
 }
 .status svg { width: 32px; height: 32px; }
 .status.turn { background: var(--tint); border-color: var(--tint); color: var(--accent); }
-.lights .tile { background: #F3EDE2; border-color: #F3EDE2; }
+.lights .tile { background: #EDE5D6; border-color: var(--line-strong); }
 .tile.lit { animation: lit .7s var(--ease); }
 @keyframes lit {
   0% { background: var(--accent); border-color: var(--accent); transform: scale(1.08); }
@@ -548,7 +567,7 @@ html[lang="ja"] .hello h1 { font-size: 1.45rem; line-height: 1.25; }
   color: var(--accent);
   animation: pop-in .45s var(--spring) both;
 }
-.flashboard .digits { font-size: 3.2rem; font-weight: 900; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+.flashboard .digits { white-space: nowrap; font-size: min(3.2rem, 13vw); font-weight: 900; letter-spacing: .06em; font-variant-numeric: tabular-nums; }
 .flashboard.hidden { background: #EFE8DB; color: var(--soft); }
 .flashboard.hidden .digits { animation: pop .4s var(--spring); }
 
@@ -556,8 +575,8 @@ html[lang="ja"] .hello h1 { font-size: 1.45rem; line-height: 1.25; }
 .model { width: min(58%, 24dvh); gap: 5px; padding: 8px; border-radius: 18px; background: #fff; border: 2px solid var(--line); }
 .model .cell { aspect-ratio: 1; border-radius: 22%; background: #F1EADD; }
 .model .cell.on { background: var(--accent); }
-.paint { width: min(100%, 40dvh); }
-.paint .tile { background: #F7F2E9; }
+.paint { width: min(100%, 48dvh); }
+.paint .tile { background: #F7F2E9; border-color: var(--line-strong); }
 .paint .tile.on { background: var(--accent); border-color: var(--accent); }
 .paint.solved .tile.on { animation: bump .5s var(--spring); }
 .bump-in { animation: bump-in .35s var(--spring); }
@@ -647,6 +666,9 @@ html[lang="ja"] .hello h1 { font-size: 1.45rem; line-height: 1.25; }
     transition-duration: .01ms !important;
   }
   .tile.lit { animation-duration: .6s !important; }
+  /* The hint becomes a still ring and wrong taps stop shaking. */
+  .nudge, .hint { animation: none !important; box-shadow: 0 0 0 6px rgba(242, 169, 0, .55); }
+  .shake { animation: none !important; }
   .flip-card .face { transition-duration: .2s !important; }
 }
 

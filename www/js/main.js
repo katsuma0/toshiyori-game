@@ -1,7 +1,7 @@
 import { fx, unlockAudio } from './feedback.js';
 import { icons } from './icons.js';
-import { settings, save, levelOf, record, playedToday, hasPlayed, markPlayed } from './store.js';
-import { t, gameName, gameHow, lang, setLang, locale } from './i18n.js';
+import { settings, save, levelOf, record, playedToday, markPlayed, markSeen, hasSeen, recordMixRound } from './store.js';
+import { t, gameName, gameHow, gameLine, lang, setLang, locale } from './i18n.js';
 import { confetti } from './particles.js';
 import { el, wait, sample, replay } from './util.js';
 import order from './games/order.js';
@@ -45,6 +45,21 @@ const app = document.getElementById('app');
 let session = null;
 
 document.addEventListener('pointerdown', unlockAudio, { once: true });
+
+// Game buttons answer on pointerdown so a tap feels instant. Keyboard, Switch
+// Control and Voice Control send only a click (detail 0), so pass those on as
+// a pointerdown, unless a real finger already pressed the same button.
+let lastDown = { el: null, at: 0 };
+document.addEventListener('pointerdown', (e) => {
+  if (e.isTrusted) lastDown = { el: e.target.closest('button'), at: performance.now() };
+}, true);
+document.addEventListener('click', (e) => {
+  if (e.detail !== 0) return;
+  const b = e.target.closest('.stage button');
+  if (!b || b.dataset.ownClick) return;
+  if (lastDown.el === b && performance.now() - lastDown.at < 1000) return;
+  b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }));
+}, true);
 
 function applySettings() {
   document.documentElement.classList.toggle('big-text', settings.bigText);
@@ -120,7 +135,8 @@ function home() {
     card.style.setProperty('--i', i);
     card.style.setProperty('--tint', tint(g.id));
     card.style.setProperty('--gink', ink(g.id));
-    card.setAttribute('aria-label', `${gameName(g.id)}. ${gameHow(g.id, 6)}.${done ? ` ${t('played')}.` : ''}`);
+    const line = gameLine(g.id);
+    card.setAttribute('aria-label', `${gameName(g.id)}. ${line}${/[.?？。]$/.test(line) ? '' : '.'}${done ? ` ${t('played')}.` : ''}`);
     card.addEventListener('click', () => {
       fx.press();
       play([g], g.rounds);
@@ -183,11 +199,17 @@ function openSettings() {
   rows.append(...items);
   sheet.append(el('div', 'grabber'), title, rows, done);
   veil.append(sheet);
-  veil.addEventListener('click', (e) => e.target === veil && close());
+  // A double tap on the gear must not land on the backdrop and close the sheet
+  // it just opened, so the backdrop ignores taps for the first half second.
+  const openedAt = performance.now();
+  let closed = false;
+  veil.addEventListener('click', (e) => e.target === veil && performance.now() - openedAt > 500 && close());
   document.body.append(veil);
   requestAnimationFrame(() => veil.classList.add('open'));
 
   function close() {
+    if (closed) return;
+    closed = true;
     veil.classList.remove('open');
     veil.classList.add('closing');
     setTimeout(() => veil.remove(), 350);
@@ -217,6 +239,9 @@ async function play(list, roundsEach, mix = false) {
   const bar = el('div', 'progress', '<i></i>');
   const fill = bar.firstElementChild;
   const instr = el('p', 'instruction');
+  // Only the instruction is announced; a live region round the whole app
+  // made VoiceOver read every screen and every stopwatch digit.
+  instr.setAttribute('aria-live', 'polite');
   const stage = el('section', 'stage');
   const flash = el('div', 'flash', icons.check);
   s.append(top, bar, instr, stage, flash);
@@ -244,7 +269,7 @@ async function play(list, roundsEach, mix = false) {
     if (!alive()) return;
     const game = plan[step];
     // First timers get a nudge sooner. Everyone gets one eventually.
-    hintDelay = hasPlayed(game.id) ? 7000 : 4000;
+    hintDelay = hasSeen(game.id) ? 7000 : 4000;
     s.style.setProperty('--accent', ink(game.id));
     s.style.setProperty('--tint', tint(game.id));
     title.innerHTML = `<span class="badge small" style="--tint:${tint(game.id)};--gink:${ink(game.id)}">${icons[game.id]}</span><span>${gameName(game.id)}</span>`;
@@ -275,6 +300,8 @@ async function play(list, roundsEach, mix = false) {
     const r = await game.round(ctx);
     clearTimeout(hintTimer);
     if (!alive()) return;
+    markSeen(game.id);
+    if (mix) recordMixRound(game.id, r.mistakes);
     mistakes += r.mistakes;
     ctx.progress(1);
     fx.round();
@@ -295,8 +322,10 @@ function results(list, mix, mistakes, ms) {
   if (mix) markPlayed('today');
   else change = record(game.id, stars);
 
-  const mins = Math.floor(ms / 60000);
-  const secs = Math.round((ms % 60000) / 1000);
+  // Round once, then split, so 59.6 s never shows as "60 sec".
+  const total = Math.round(ms / 1000);
+  const mins = Math.floor(total / 60);
+  const secs = total % 60;
   const time = mins ? t('mins', mins, secs) : t('secs', secs);
   const accent = mix ? '#1E7346' : ink(game.id);
 

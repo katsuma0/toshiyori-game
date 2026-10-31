@@ -36,6 +36,7 @@ export default {
         }
       });
       grid.classList.add('big-numbers');
+      if (max > 99) grid.classList.add('three-digits');
       ctx.stage.append(grid);
       ctx.setHint(() => tiles.find((t) => +t.dataset.value === order[next]));
     });

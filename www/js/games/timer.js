@@ -120,6 +120,7 @@ export default {
     const go = el('button', 'sw-go is-start', goButton('start'));
     go.type = 'button';
     go.dataset.role = 'go';
+    go.dataset.ownClick = '1';
     go.setAttribute('aria-label', t('start'));
     info.append(read, off);
     top.append(face, info);

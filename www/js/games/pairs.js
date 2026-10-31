@@ -1,4 +1,5 @@
 import { el, sample, shuffle, wait, replay } from '../util.js';
+import { t } from '../i18n.js';
 
 // Classic matching pairs with real 3D card flips. Some misses are part of the
 // game, so only misses beyond one per pair count against the stars.
@@ -29,6 +30,15 @@ export default {
         c.type = 'button';
         c.dataset.value = p;
         c.style.setProperty('--i', i);
+        // Face down, VoiceOver must hear "Card", not the picture underneath.
+        const front = c.querySelector('.front');
+        const hide = (down) => {
+          front.setAttribute('aria-hidden', String(down));
+          if (down) c.setAttribute('aria-label', t('card'));
+          else c.removeAttribute('aria-label');
+        };
+        hide(true);
+        new MutationObserver(() => hide(!c.classList.contains('up'))).observe(c, { attributes: true, attributeFilter: ['class'] });
         c.addEventListener('pointerdown', async (e) => {
           e.preventDefault();
           if (c.classList.contains('up') || open.length === 2) return;

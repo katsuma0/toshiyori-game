@@ -24,6 +24,7 @@ export default {
 
     return new Promise((resolve) => {
       const { grid, tiles } = tileGrid(range(0, n - 1), cols, async (t, i) => {
+        t.setAttribute('aria-pressed', String(!on.has(i)));
         if (on.has(i)) {
           on.delete(i);
           t.classList.remove('on');
@@ -47,7 +48,10 @@ export default {
         }
       }, () => '');
       grid.classList.add('paint');
-      tiles.forEach((tile, i) => goal.has(i) && (tile.dataset.goal = '1'));
+      tiles.forEach((tile, i) => {
+        tile.setAttribute('aria-pressed', 'false');
+        if (goal.has(i)) tile.dataset.goal = '1';
+      });
       ctx.stage.append(grid);
       ctx.setHint(() => tiles.find((tile, i) => goal.has(i) !== on.has(i)));
     });

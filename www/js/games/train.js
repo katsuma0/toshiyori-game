@@ -1,4 +1,5 @@
 import { el, pick, rand, wait, choices } from '../util.js';
+import { t } from '../i18n.js';
 
 // Fix the track. A little railway crosses a map seen from above and one piece
 // is missing. Pick the tile that joins the two loose ends, then the train
@@ -604,6 +605,13 @@ export default {
       const answered = choices(host, opts, pieceOf(cell), (v) => tileSVG(v, { withArrow: true, cls: 'trn-opt' }), ctx.fx);
       const next = host.firstElementChild;
       next.classList.add('trn-choices');
+      // The pictures are hidden from VoiceOver, so each button says where its
+      // track leads on screen, the same way the arrow points.
+      const SAY = { W: 'bendLeft', E: 'bendRight', N: 'bendUp', S: 'bendDown' };
+      [...next.children].forEach((b, i) => {
+        const o = opts[i][1];
+        b.setAttribute('aria-label', t(o === OPP[cell.in] ? 'straight' : SAY[o]));
+      });
       // Capture runs before choices() sees the tap, with the same guard it
       // uses, so the gap reacts the instant the finger lands.
       next.addEventListener(

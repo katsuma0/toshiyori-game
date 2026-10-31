@@ -1,6 +1,6 @@
 // Sound and touch feedback. Every sound is synthesized so the app ships no audio
-// files, and every tone stays in the 200 to 1100 Hz band because high pitches are
-// the first thing age related hearing loss takes away.
+// files, and every note sits between about 160 and 1050 Hz because high pitches
+// are the first thing age-related hearing loss takes away.
 
 import { settings } from './store.js';
 import { burst } from './particles.js';
@@ -21,7 +21,9 @@ function audio() {
     comp.ratio.value = 4;
     master.connect(comp).connect(ctx.destination);
   }
-  if (ctx.state === 'suspended') ctx.resume();
+  // iOS leaves the context 'interrupted' after a phone call or alarm, not just
+  // 'suspended', so any state but running gets a nudge on the next sound.
+  if (ctx.state !== 'running' && ctx.state !== 'closed') ctx.resume().catch(() => {});
   return ctx;
 }
 
@@ -112,6 +114,8 @@ export const fx = {
   },
   // A light tap on a tile that is not right or wrong yet.
   select(i = 4) {
+    // Copy can ask for a high step at level 5; cap it at the top of the range.
+    i = Math.min(i, 10);
     impact('LIGHT', 10);
     note(penta(i), { dur: 0.3, vol: 0.18 });
   },
