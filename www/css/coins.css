@@ -65,7 +65,7 @@
 .v-two .cash-item { flex-direction: column; align-items: center; gap: 2px; }
 .v-two .cash-item .emoji { font-size: calc(clamp(3rem, 7.6dvh, 4.1rem) * var(--fit, 1)); }
 /* Two tags side by side: sized to the counter so long prices still fit. */
-.v-two .cash-tag { font-size: min(1.9rem, 8.6cqi); padding: .08em .4em .08em .8em; }
+.v-two .cash-tag { font-size: calc(min(1.9rem, 8.6cqi) * var(--tag, 1)); padding: .08em .4em .08em .8em; }
 .v-two .cash-tag::before { left: .26em; }
 .v-two .cash-item + .cash-plus + .cash-item .emoji { animation-delay: .15s; }
 .cash-plus {
@@ -84,7 +84,7 @@
   background: #FFF8E1;
   border: 2px solid var(--line-strong);
   color: var(--ink);
-  font-size: clamp(1.7rem, 4.4dvh, 2.2rem);
+  font-size: calc(clamp(1.7rem, 4.4dvh, 2.2rem) * var(--tag, 1));
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
@@ -180,9 +180,12 @@
   background: var(--tint);
   border: 2px solid var(--line-strong);
 }
+/* The label pill sits centred on the tray's top edge, and a labelled tray
+   keeps its money clear of it at any text size. */
+.cash-tray.labelled { padding-top: calc(.75rem + 16px); }
 .cash-label {
   position: absolute;
-  top: -17px;
+  top: calc(-.75rem - 6px);
   left: 18px;
   padding: 2px 14px;
   border-radius: 999px;
@@ -281,5 +284,6 @@
   .cash-shop { padding: 10px 10px 22px; }
   .cash-shop::after { height: 28px; }
   .cash-tray { padding: 16px 10px 12px; gap: 6px; }
+  .cash-tray.labelled { padding-top: calc(.75rem + 12px); }
   .cash-pick { width: calc(min(64px, 18cqi) * var(--s, 1)); }
 }

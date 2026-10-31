@@ -138,13 +138,16 @@ function piece(v, l, i, cls = '') {
 // Items by price band, so a cake never costs 40¢ and a banana never $9.
 const ITEMS = {
   en: [
-    [100, ['🍌', '🍎', '🍊', '🍬']],
+    [50, ['🍬', '🍭']],
+    [100, ['🍌', '🍎', '🍊', '🍬', '🍭']],
     [500, ['🍞', '🥛', '☕', '🧀', '🍪', '🥐', '📰', '🍵', '🥕', '🍩']],
     [1000, ['🍰', '🌷', '🍕', '🧦', '🍇']],
     [Infinity, ['💐', '☂️', '🧣', '📚', '🧸', '🎁']],
   ],
   ja: [
-    [150, ['🍌', '🍎', '🍬', '🍙', '🍡']],
+    // 30円 buys a sweet or a banana, never an onigiri.
+    [100, ['🍬', '🍭', '🍌']],
+    [150, ['🍎', '🍙', '🍡', '🍬']],
     [500, ['🍞', '🥛', '☕', '🍵', '🍙', '🍪', '🥐', '📰', '🍩']],
     [1500, ['🍰', '🍱', '🌷', '🍇', '🧀']],
     [Infinity, ['💐', '☂️', '🧣', '📚', '🧸', '🎁', '👟']],
@@ -471,7 +474,7 @@ function shopItem(emoji, price, l) {
 }
 
 function tray(list, l, label) {
-  const t = el('div', 'cash-tray');
+  const t = el('div', label ? 'cash-tray labelled' : 'cash-tray');
   if (label) t.append(el('span', 'cash-label', label));
   list.forEach((v, i) => t.append(piece(v, l, i)));
   return t;
@@ -558,6 +561,19 @@ function fit(stage, b) {
   return f;
 }
 
+// A long price like 10,510円 in big text can be wider than the counter.
+// Shrink the tags a step at a time until the shelf fits inside it.
+function fitShelf(b) {
+  const shop = b.querySelector('.cash-shop');
+  if (!shop) return;
+  const shelf = shop.querySelector('.cash-shelf');
+  const room = shop.clientWidth - 32;
+  for (let k = 1; shelf.offsetWidth > room && k > 0.6; ) {
+    k = Math.round((k - 0.05) * 100) / 100;
+    shop.style.setProperty('--tag', k);
+  }
+}
+
 // Plays one prepared problem. Exported so the test page can show any variant.
 export async function playProblem(ctx, p) {
   const l = p.lang;
@@ -600,6 +616,7 @@ export async function playProblem(ctx, p) {
     }
   }
   fit(ctx.stage, b);
+  fitShelf(b);
   row.querySelector('.choice[data-ok]').addEventListener('pointerdown', () => reveal(b, p, ctx), { once: true });
   ctx.setHint(() => ctx.stage.querySelector('.choice[data-ok]'));
 
