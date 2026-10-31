@@ -5,7 +5,7 @@
 **Subtitle** (30 max): Big buttons, easy brain games
 
 **Promotional text** (170 max):
-Fifteen short puzzles with big numbers, clear buttons and soft sounds. No ads, no sign in, nothing to type.
+Fifteen short puzzles with big numbers, clear buttons and soft sounds. No ads, no sign-in, nothing to type.
 
 **Description:**
 
@@ -13,13 +13,13 @@ Brain Garden is fifteen small puzzles for a few minutes with a cup of tea. Count
 
 Press the big green Play button and you get five of them, mixed. That is all there is to learn.
 
-Every screen has one big Home button, so you can always get back. There is nothing to type and no account to make. If you are stuck, the right answer starts to glow after a few seconds.
+Every screen has one big Home button, so you can always get back. There is nothing to type and no account to make. In most games, if you are stuck, the right answer starts to glow after a few seconds.
 
 The numbers are large and the buttons are larger. Every tap clicks softly and buzzes in your hand, so you know it worked. Wrong answers get a gentle tone, not a buzzer, and the game carries on.
 
-Each game takes about a minute. In Japanese, the money is yen. Do well and the next round gets a little harder. Have an off day and it gets a little easier.
+Each game takes about a minute. The money is Canadian dollars; in Japanese, it is yen. Do well and the next round gets a little harder. Have an off day and it gets a little easier.
 
-There are no ads and no in app purchases. The app does not use the internet and collects nothing.
+There are no ads and no in-app purchases. The app does not use the internet and collects nothing.
 
 **Keywords** (100 max):
 seniors,elderly,memory,brain,puzzle,large text,simple,math,number,easy,games for grandparents
@@ -43,11 +43,11 @@ Brain Garden は、お茶を飲みながら数分で遊べる15種類の脳ト�
 
 緑の「あそぶ」ボタンを押すと、5つのゲームがまざって始まります。おぼえることはそれだけです。
 
-どの画面にも大きな「ホーム」ボタンがあるので、迷いません。文字を入力する場面はありません。わからない時は、数秒で答えがやさしく光ります。
+どの画面にも大きな「ホーム」ボタンがあるので、迷いません。文字を入力する場面はありません。多くのゲームでは、わからない時に数秒で答えがやさしく光ります。
 
 まちがえても、ブザーは鳴りません。やさしい音がして、そのまま続けられます。
 
 広告もアプリ内課金もありません。インターネットを使わず、データも集めません。
 
 **キーワード**:
-脳トレ,高齢者,シニア,認知,記憶,計算,パズル,大きな文字,かんたん,数字,お金
+高齢者,シニア,認知,記憶,計算,パズル,大きな文字,かんたん,数字,お金
